@@ -1,0 +1,47 @@
+    body {
+      font-family:Verdana, Arial;
+      font-size:75%;
+      }
+      
+    h1 {
+      padding-left:8px;
+      }  
+      
+    #msg {
+      color:red;
+      font-weight:bold;
+      height:1.5em;
+      padding-left:8px;
+      }  
+
+    .error {
+      border:solid red 1px;
+      }
+
+    #selections {
+      border-collapse:separate;
+      border-spacing:8px;      
+      }
+    #selections > tbody > tr > td {
+      border:0;
+      padding:2px 10px;
+      white-space: nowrap;
+      }  
+    #selections > tbody > tr > td:first-child:not(.col2) {
+      font-weight:bold;
+      background-color:#EEE;
+      width:280px;
+      vertical-align:top;
+      padding:4px 2px;
+      } 
+    #selections > tbody > tr > td >select {
+      width:280px;
+    }
+    
+    input[type=number] {
+      width:4em;
+      }
+      
+    #output {
+      background-color:#EEE;
+      }  

@@ -1,0 +1,48 @@
+"Compilierte" Syntax (Kommentare beginnen mit '#', Leerzeilen werden übersprungen)
+---------------------------------------------------------------------------------------------
+version:0.9
+hsys:V               # Häusersystem
+cont-with-mosh:1     # Fortsetzen bei switch auf Moshier (wg. fehlender Ephemeridendateien)
+...                  # Weitere Parameter können folgen
+
+
+score-begin          # Schlüsselwort score-begin in leerer Zeile leitet Score-Funktion ein
+16.78*zl(0,30,60)    # 16.78 * (Sonne in Zeichen Stier ? 1 : 0)
+-5*zl(1,330,360)     # - 5* (Mond in Fische ? 1 : 0)
+10*zll(1,0,115,125)  # +10 * (Sonne im vorauslaufenden Trigon zu Mond, mit Orbis 5° ? 1 : 0)
+7*mp(9,210,240)      # + 7* (Pluto im 8. Haus ? 1 : 0)
+score-end            # Ende der Score-Formel
+---------------------------------------------------------------------------------------------
+
+Häuserspitzen 1 - 12 brauchen eigene Nummern als Faktoren. Vielleicht -1...-12?
+
+Das File wird zu Beginn vom C-Programm geparsed und in eine Datenstruktur übernommen.
+Es wird auch ermittelt, ob Hausberechnung nötig ist oder nicht (enthält Formel mp() oder Häuserspitzen) -> Effizienz
+Ebenso wird die Gesamtmenge der benötigten Planeten- oder Hauslängen ermittelt und vorab berechnet
+
+oMeta Transformation generiert obigen Output
+Via Piping wird er zum stdin des astrotest.c Programms 
+(das "compilierte" File kann zu Analysezwecken gespeichert werden, muss aber nicht)
+
+Maximale Zeilenzahl: mit malloc( ) werden Speicherblöcke (100er) reserviert. 
+Bei Überschreiten wird der Bereich vergrössert
+
+Pufferung: Für den Plan wird ein Umschlüsselungs-Array für Planetenpositionen geführt
+0 -> SE_MOON,
+1 -> SE_VENUS,
+2 -> SE_PLUTO
+3 -> -4 für 4. Haus
+je nachdem, was in der Formel für Werte gebraucht werden
+Die Terme enthalten nicht SE_MOON, sondern den Index in diesem Array von SE_MOON.
+Der Puffer wird für jedes neue JD invalidiert (flag: planet_buffer_valid = false).
+Müssen Häuser oder Hauspositionen berechnet werden, wird im Ausführungsplan ein Flag houses_needed = true gesetzt.
+
+Nun, nach Zerschlagung der Source in einzelne Files mit eigenem Objectcode, ist nun auch ein Testprogramm test.c möglich,
+das die einzelnen Units austestet.
+
+
+
+
+
+
+
