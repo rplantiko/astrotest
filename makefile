@@ -6,7 +6,7 @@ RM = del
 
 .PHONY: all all-before all-after clean clean-custom
 
-all: all-before astrotest.exe tests.exe test.exe all-after
+all: all-before astrotest.exe tests.exe all-after
 
 clean: clean-custom
 	${RM} $(OBJ) astrotest.o tests.o astrotest.exe tests.exe $(BIN)

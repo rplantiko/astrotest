@@ -144,10 +144,11 @@ double mundanePosition( int pl, _hordat* hor) {
 double zodiacalLengthInRange(_hordat* hor, _termFunctionArgs* args) {  
   double l = zodiacalLength( args->pl1, hor->jd );
   if (debug_level) {
-    fprintf(dbg,"      l:%6.2f, in range: %s\n",
-      l, (arcdiff(l,args->start)>0 && arcdiff(args->end,l)<0) ? "yes" : "no" );
+    fprintf(dbg,"      l:%6.2f, in range (%.2lf-%.2lf): %s\n",
+      l,args->start,args->end, 
+      (arcdiff(l,args->start)>0 && arcdiff(args->end,l)>0) ? "yes" : "no" );
     }  
-  return arcdiff(l,args->start)>0 && arcdiff(args->end,l)<0;
+  return arcdiff(l,args->start)>0 && arcdiff(args->end,l)>0;
   }
 
 
@@ -157,8 +158,8 @@ double zodiacalAspect(_hordat* hor, _termFunctionArgs* args) {
     l2 = zodiacalLength( args->pl2, hor->jd ),
     diff = arcdiff(l2,l1);          
     if (debug_level) {
-      fprintf(dbg,"      l1:%6.2f, l2:%6.2f, diff: %6.2f, aspect holds: %s\n",
-        l1, l2, diff,
+      fprintf(dbg,"      l1:%6.2f, l2:%6.2f, diff: %6.2f, aspect (%.2f-%.2f) holds: %s\n",
+        l1, l2, diff, args->start, args->end,
         (diff > args->start && diff < args->end) ? "yes" : "no" );
       }  
     return diff > args->start && diff < args->end; 
@@ -167,10 +168,11 @@ double zodiacalAspect(_hordat* hor, _termFunctionArgs* args) {
 double mundanePositionInRange(_hordat* hor, _termFunctionArgs* args) {
   double mp = mundanePosition( args->pl1, hor );  
   if (debug_level) {
-    fprintf(dbg,"      mp:%6.2f, in range: %s\n",
-      mp, (arcdiff(mp,args->start)>0 && arcdiff(args->end,mp)<0) ? "yes" : "no" );
+    fprintf(dbg,"      mp:%6.2f, in range (%.2f-%.2f): %s\n",
+      mp, args->start, args->end, 
+      (arcdiff(mp,args->start)>0 && arcdiff(args->end,mp)>0) ? "yes" : "no" );
     }  
-  return arcdiff(mp,args->start)>0 && arcdiff(args->end,mp)<0;
+  return arcdiff(mp,args->start)>0 && arcdiff(args->end,mp)>0;
   }
   
 double mundaneAspect(_hordat* hor, _termFunctionArgs* args) {
@@ -179,8 +181,8 @@ double mundaneAspect(_hordat* hor, _termFunctionArgs* args) {
     mp2 = mundanePosition( args->pl2, hor ),
     diff = arcdiff(mp2,mp1);          
     if (debug_level) {
-      fprintf(dbg,"      mp1:%6.2f, mp2:%6.2f, diff: %6.2f, m. aspect holds: %s\n",
-        mp1, mp2, diff,
+      fprintf(dbg,"      mp1:%6.2f, mp2:%6.2f, diff: %6.2f, m. aspect (%.2f-%.2f) holds: %s\n",
+        mp1, mp2, diff, args->start, args->end,
         (diff > args->start && diff < args->end) ? "yes" : "no" );
       }  
     return diff > args->start && diff < args->end; 

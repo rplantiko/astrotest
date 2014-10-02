@@ -34,10 +34,11 @@ double get_score_debug( struct _hordat *hordat) {
 
    fprintf( dbg, "(%f %f %f)\n  ", hordat->jd, hordat->lon, hordat->lat );   
    for (int i=0; i<scoreFunction.size;i++) { 
-     fprintf(dbg,"%5.2f ",scoreFunction.terms[i].f( hordat, & scoreFunction.terms[i].args ));
-     score += scoreFunction.terms[i].f( hordat, & scoreFunction.terms[i].args );
+     double s = scoreFunction.terms[i].f( hordat, & scoreFunction.terms[i].args );
+     fprintf(dbg, "%10.2lf + %.2lf => %10.2lf\n", score, s, score + s );     
+     score += s;
      }
-   fprintf( dbg, "\n  sum = %f\n", score );     
+   fprintf( dbg, "  sum = %f\n\n", score );     
    
    return (double) score;  
   

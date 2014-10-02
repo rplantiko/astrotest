@@ -288,7 +288,7 @@ void parse_score_function( char* line, _scoreFunction* scoreFunction) {
           &ipl1, 
           &term.args.start, 
           &term.args.end)!=3) {
-      fprintf(stderr,"Wrong number of arguments for zl function in '%s'\n",line);
+      fprintf(stderr,"Wrong number of arguments for mp function in '%s'\n",line);
       exit(EXIT.SYNTAX_ERROR);
       }
     term.args.pl1 = get_pl( ipl1 );      
@@ -315,7 +315,7 @@ void parse_score_function( char* line, _scoreFunction* scoreFunction) {
           &ipl2, 
           &term.args.start, 
           &term.args.end)!=4) {
-      fprintf(stderr,"Wrong number of arguments for zll function in '%s'\n",line);
+      fprintf(stderr,"Wrong number of arguments for mpp function in '%s'\n",line);
       exit(EXIT.SYNTAX_ERROR);
       }
     term.args.pl1 = get_pl( ipl1 );      
