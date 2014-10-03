@@ -9,9 +9,11 @@ C<astrotest> assists you in testing astrological hypotheses. For performing such
 =item 1. I<Objectify> your hypothesis. 
 
 For the work with C<astrotest>, this means: Define a I<score function> which expresses a function built of elementary constellations of a horoscope, like zodiacal or mundane aspects, sign positions, or house positions. In C<astrotest>, each term consists of a weight factor (which can be negative, converting the term into a penalty term), applied to an elementary constellation like "Sun in Leo" or "Angle Mercury / Venus between 40 and 50 degrees". The full score function is a collection of those I<score function terms>. Define a score function such that your hypothesis can be expressed as "The horoscopes from this group have a score higher than could be expected by chance".
+
 =item 2. I<Collect> birth data... 
 
 ...for your group with the given trait. Do this diligently, following a strategy. If you don't want to fool yourself, don't look at the horoscopes themselves at this stage! Don't base the decision to add or to ignore a certain horoscope on any astrological criterion! You may use given horoscope collections like Taeger's I<Internationales Horoskope Lexikon>, encyclopedia,... For C<astrotest>, the horoscope data have to be available in the form of an AAF data collection, or as a CSV file with julian dates, geographical longitude and latitude.
+
 =item 3. Perform the I<test run>... 
 
 to check your hypothesis. A p value lower than 5% makes your finding interesting - worth to perform an independent re-check with different data. Such a replication studie with a completely different data set, and still with a good p value, can be regarded as a good validation for your hypothesis. 
