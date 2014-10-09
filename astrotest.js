@@ -1,7 +1,7 @@
 /* Logic for astrotest.html */
-var fso; 
+var fso;
 
-function init() {  
+function init() {
 
   clearError();
   clearOut( );
@@ -9,132 +9,142 @@ function init() {
   try {
     fso = new ActiveXObject("Scripting.FileSystemObject");
     } catch (e) {
-    showError("This HTML page requires ActiveX and will only work correctly on Internet Explorer");
+    showError("ActiveX Objects could not be created - Internet Explorer and ActiveX authorization required for this page!");
     }
 
+// Fill select options from astrotest_settings.js
   fill_select_options(houseSystems)(byId("hsys"));
   fill_select_options(dateFunctions)(byId("rand-date-fn"));
 
 // Define the reactions on clicks and changes
-  registerFor( "rand-date-fn", "change", rand_date_fn_changed );    
   registerFor( "compute", "click", compute );
-  registerFor( "generate_seed", "click", generate_seed );
-  
+
+// Score function - new rows
+  registerFor( byClass("add_row"), "click", on_click_score_fn_add_row );
+
+// Random date functions
+  registerFor( "rand-date-fn", "change", on_change_rand_date_fn );
+  registerFor( "generate-seed-values", "click", generate_seed_values );
+  registerFor( byClass("juldate"), "change", input_juldate );
+
+// Handle the execution plan
+  registerFor( "save-plan", "click", on_click_save_plan );
+  registerFor( "read-plan", "click", on_click_read_plan );
+
+// AAF - CSV conversion
+  registerFor( "switch-to-aaf", "click", switch_csv_aaf(true) );
+  registerFor( "switch-to-csv", "click", switch_csv_aaf(false) );
+  registerFor( "convert-from-aaf", "click", convert_from_aaf );
+
+// Different input fields for file names
   var file_chooser = fileChooser( );
   registerFor( byClass("choose-file"), "click", file_chooser.open );
   registerFor( "file-dialog", "change", file_chooser.take );
 
-  registerFor( byClass("juldate"), "change", input_juldate );
-  registerFor( byClass("add_row"), "click", on_click_score_fn_add_row );
+// Showing and hiding the help window
+  helpDisplay( );
 
-  registerFor( "save-plan", "click", function(event) {
-    var plan = generatePlan();
-    savePlan( getText("plan-file"), plan );      
-    });    
-  registerFor( "read-plan", "click", function(event) {
-    var plan = readPlan( getText("plan-file") );
-    fillSelectionsFromPlan( plan );
-    });    
-  registerFor( "switch-to-aaf", "click", function(event) {
-    byId("row-csv").style.display="none";
-    byId("row-aaf").style.display="";
-    });  
-  registerFor( "switch-to-csv", "click", function(event) {
+  }
+
+
+// Adapt the additional parameter input on change of random date function
+function on_change_rand_date_fn() {
+  var fn = getText("rand-date-fn");
+  byId("R-dates").style.display = (fn == 'R' ? "" : "none" );
+  byId("Q-quantiles").style.display = (fn == 'Q' ? "" : "none" );
+  }
+
+// Adapt the input field visibility for a score function
+function on_change_score_fn( ) {
+  var row = getTagNamedParent(this,"TR");
+  adaptScoreFunctionInputFields( row );
+  }
+
+// Generate plan from selections, and save it to file
+function on_click_save_plan() {
+  var plan = generatePlan();
+  savePlan( getText("plan-file"), plan );
+  }
+
+// Read plan from file, and fill selections from it
+function on_click_read_plan() {
+  var plan = readPlan( getText("plan-file") );
+  fillSelectionsFromPlan( plan );
+  }
+
+// Toggle input field for csv versus aaf
+function switch_csv_aaf( to_aaf ) {
+  return function() {
+    byId("row-csv").style.display = (to_aaf ? "none" : "");
+    byId("row-aaf").style.display = (to_aaf ? "" : "none");
+    }
+  }
+
+// Calls the conversion function from aaf2csv.js
+// Errors are shown in the output area
+function convert_from_aaf() {
+  try {
+    clearError( );
+    clearOut( );
+    setText("source-file","");
+    var file_csv = convert_aaf_to_csv( );
+    out("File successfully converted to '"+file_csv+"'");
+    setText("source-file",file_csv);
     byId("row-csv").style.display="";
     byId("row-aaf").style.display="none";
-    setText("source-file","");
-    });  
-  registerFor( "convert-from-aaf", "click", function(event) {
-    try {
-      clearError( );
-      clearOut( );
-      setText("source-file","");
-      var file_csv = convert_aaf_to_csv( );
-      out("File successfully converted to '"+file_csv+"'");
-      setText("source-file",file_csv);
-      byId("row-csv").style.display="";
-      byId("row-aaf").style.display="none";
-      } catch (e) {
-           showError(e);
-          }
-    });  
+    } catch (e) {
+         showError(e);
+        }
   }
 
-// Function for opening the file explorer value help, 
-// and transporting the chosen file name to another input field
-function fileChooser() {
-  var id;
-  return {
-    open:function(event) {
-      id = event.target.getAttribute("data-for");
-      byId("file-dialog").click( );
-      },
-    take:function(event) {
-      setText(id,event.target.value);
-      }
-    };
-  }
 
 function on_click_score_fn_add_row(event) {
   score_fn_add_row(event.target.id.replace(/^add-/,""))();
   }
-  
-// Different function to add score function terms  
+
+// Different functions to add score function terms
 function score_fn_add_row( id ) {
   var fn = {};
   if (!(id in fn)) {
     var cells = parseCellsFromTemplate( "row-template-"+id );
     fn[id] = function() {
       var row = byId("score-fn").insertRow(-1);
-      setClass(row,id.replace(/^add\-/,""));    
+      setClass(row,id.replace(/^add\-/,""));
       cells.each( function( cell ) {
         var td = row.insertCell();
         td.innerHTML = cell;
         });
       byClass("fn",row).each( function() {
-        registerFor( this, "change", score_fn_changed);
-        });  
-      byClass("delete_row",row).each( function() { 
+        registerFor( this, "change", on_change_score_fn );
+        });
+      byClass("delete_row",row).each( function() {
         registerFor( this, "click", delete_row );
-        });  
+        });
       return row;
       };
-  }    
+  }
   return fn[id];
-  
+
   function parseCellsFromTemplate( template_id  ) {
     var tmpl = document.createElement("div");
     tmpl.innerHTML = "<table><tr>"+byId(template_id).innerHTML+"</tr></table>";
     fill_listboxes( tmpl ) ;
     return byTagName( "td", tmpl ).map( function(c) { return c.innerHTML });
-    }    
+    }
   }
 
-// Adapt the additional parameter input on change of random date function
-function rand_date_fn_changed() {
-  var fn = getText("rand-date-fn");  
-  byId("R-dates").style.display = (fn == 'R' ? "" : "none" );
-  byId("Q-quantiles").style.display = (fn == 'Q' ? "" : "none" );    
-  }
-  
-// Adapt the input field visibility for a score function 
-function score_fn_changed( ) {
-  var row = getTagNamedParent(this,"TR");
-  adaptScoreFunctionInputFields( row );
-  }
-  
-// For a given score function: which fields are visible  
+// For a given score function: which fields are visible
 function adaptScoreFunctionInputFields( row ) {
   var fn = byClass("fn",row)[0].value;
   byClass( "pl2", row ).each( function() {
     this.style.display = takesTwoPlanets( fn ) ? "":"none";
-    })      
-  }  
+    })
+  }
 
-// Describes which functions need two planets as arguments  
+// Describes which functions need two planets as arguments
 function takesTwoPlanets( fn ) {
   return (fn == "zll") || (fn == "mpp");
-  }    
+  }
 
 // On click: Delete a term of the score function
 function delete_row( event ) {
@@ -143,8 +153,8 @@ function delete_row( event ) {
   }
 
 // Fill all listboxes of a row
-function fill_listboxes( element ) { 
-  [ 
+function fill_listboxes( element ) {
+  [
     { type:"planet",     options:planets },
     { type:"fn",         options:scoreFunctions },
     { type:"aspect",     options:aspects },
@@ -153,7 +163,7 @@ function fill_listboxes( element ) {
     { type:"reference",  options:references },
     { type:"direction",  options:directions }
     ].each( function() {
-      byClass( this.type, element).each( 
+      byClass( this.type, element).each(
         fill_select_options( this.options )
         );
       });
@@ -173,15 +183,15 @@ function add_option( selectElement, key, value ) {
   var option = document.createElement("option");
   option.value = key;
   option.textContent = value;
-  if ( selectElement.hasAttribute( "value" ) && 
-       (key === selectElement.getAttribute("value")) 
+  if ( selectElement.hasAttribute( "value" ) &&
+       (key === selectElement.getAttribute("value"))
      ) {
     option.setAttribute("selected", true);
     }
   selectElement.appendChild(option);
-  }  
-  
-// Perform the computation, if everything is OK  
+  }
+
+// Perform the computation, if everything is OK
 function compute() {
   try {
     if (checkInput()) {
@@ -193,7 +203,7 @@ function compute() {
     } catch (e) {
       out (e);
       }
-  }  
+  }
 
 // Output text to output area (Log)
 function out( text ) {
@@ -205,47 +215,47 @@ function clearOut() {
   setText("output","");
   }
 
-// All input rules to check before computation  
+// All input rules to check before computation
 function checkInput( ) {
   clearError();
   try {
-    
+
     if (is_initial("source-file")) throw {
       msg:"Please specify source file",
       field:byId("source-file")
       };
-      
+
     if (!fso.FileExists(fullPath(getText("source-file")))) throw {
       msg:"File '" + fullPath(getText("source-file")) + "' not found",
-      field:byId("source-file")      
+      field:byId("source-file")
       };
-      
+
     byTagName("input")
-      .subset( function() { 
-        return (this.getAttribute("type") == "number") && 
+      .subset( function() {
+        return (this.getAttribute("type") == "number") &&
                isVisible( this );
         })
-      .each( check_numeric );     
-      
-    
+      .each( check_numeric );
+
+
     if (byTagName("tr",byId("score-fn")).length === 0) {
       throw {
-        msg: "No score function defined!"        
+        msg: "No score function defined!"
         }
-      } 
-      
+      }
+
     if (getText("test-runs")<=0) {
       throw {
         msg:"Please specify a positive number of runs",
         field:byId("test-runs")
         }
       }
-      
+
     if (getText("rand-date-fn")=="R") {
       var jd1 = check_numeric("jd1"),
           jd2 = check_numeric("jd2"),
           jd3 = check_numeric("jd3");
-      
+
       if (jd1 >= jd2) throw {
         msg:"The julian date values have to increase",
         field: byId("jd2")
@@ -254,9 +264,9 @@ function checkInput( ) {
         msg:"The julian date values have to increase",
         field: byId("jd3")
         }
-      
+
       }
-      
+
       if (getText("rand-date-fn")=="Q") {
         var q = check_numeric("quantiles");
         if (q <=1) throw {
@@ -266,56 +276,56 @@ function checkInput( ) {
         if (q != Math.floor(q)) throw {
           msg:"Please choose an integer value for quantile number",
           field:"quantiles"
-          };          
-        }    
-    
+          };
+        }
+
     return true;
-        
+
     } catch(e) {
       showError(e);
       return false;
-      }          
+      }
   }
 
 // Display an exception object in error message area,
-// Mark a field as erroneous  
+// Mark a field as erroneous
 function showError( e ) {
   var msg = (typeof e == "string") ? e : e.msg,
       field;
   setText("msg",e.msg || e);
-  if ((typeof e == "object") && 
-       e.field && 
+  if ((typeof e == "object") &&
+       e.field &&
        (field = getElement( e.field ))) {
-    field.select(); 
+    field.select();
     field.focus();
     setClass(field,"error");
-    }  
-  }  
-  
-// Clear error message area, 
+    }
+  }
+
+// Clear error message area,
 // clear all field error markers
 function clearError() {
   setText("msg","");
   byTagName("input").concat(byTagName("select")).each( function() {
     resetClass(this,"error");
     });
-  }  
+  }
 
 // Checks whether element is currently visible
 function isVisible( element ) {
-// Quick tests  
+// Quick tests
   if (!element) element = this;
   if (element.offsetParent === null) return false;
   if (element.style.display == "none") return false;
   var row = getTagNamedParent(element,"TR");
   if (row && row.style.display == "none") return false;
-// Slow, but definitive  
+// Slow, but definitive
   var s = window.getComputedStyle( element );
   return (s.display != "none");
-  }  
+  }
 
 // Throws an exception if field content is not numeric
-// If numeric, the field content is returned as a number  
+// If numeric, the field content is returned as a number
 function check_numeric( field ) {
   if (!field) field = this;
   if (typeof field == "string") field = byId(field);
@@ -325,30 +335,30 @@ function check_numeric( field ) {
       msg:"Please enter a number",
       field:field
       };
-    }  
+    }
   return 1*v;
-  } 
- 
-// Checks whether "value" contains a number  
+  }
+
+// Checks whether "value" contains a number
 function is_numeric( value ) {
   return !isNaN(parseFloat((value))) && isFinite(value)
   }
-  
-  
+
+
 // Returns true if field is initial
-// i.e. contains only whitespace, or, 
-// in the numeric case, is 0  
+// i.e. contains only whitespace, or,
+// in the numeric case, is 0
 function is_initial( field ) {
  if (!field) field = this;
  if (typeof field == "string") field = byId(field);
  var v = field.value;
  if (is_numeric(v)) return ( v == 0);
- else return !v.match(/\S/); 
- }     
+ else return !v.match(/\S/);
+ }
 
 // For validation purposes: Throws an exception
 // if field contains only whitespace (non-numeric case)
-// or 0 (numeric case) 
+// or 0 (numeric case)
 function check_not_initial( field ) {
   if (!field) field = this;
   var v = field.value;
@@ -363,16 +373,16 @@ function check_not_initial( field ) {
     msg:"Please enter a value",
     field:field
     }
-  }   
-  
+  }
+
 }
-  
-// Build the full execution plan from the HTML page input  
+
+// Build the full execution plan from the HTML page input
 function generatePlan( ) {
-  
+
 // Build the plan - as an array of strings (to become the lines of the file)
   var plan = ["version:0.9"];
-  
+
   plan.push( "source-file:"+getText("source-file") );
   plan.push( "test-runs:"+1*getText("test-runs") );
   plan.push( "hsys:"+byId("hsys").value );
@@ -392,56 +402,56 @@ function generatePlan( ) {
   if (ephepath.match(/\S/)) {
     plan.push("ephepath:"+ephepath);
     }
-  
+
   generateScoreFunction( plan );
-  
+
   return plan;
-  
+
   }
-  
-// Build the score function terms from the input in the HTML page  
-function generateScoreFunction( plan ) {  
-  
+
+// Build the score function terms from the input in the HTML page
+function generateScoreFunction( plan ) {
+
   var orb = getText("orb")*1;  // Needed for aspect resolution
 
-  var translate = { 
+  var translate = {
     "aspect":function(row,plan) {
       var val = getInputValues(row);
       var fn = val[5] == 'z' ? raw_fn.zll : raw_fn.mpp;
       if (val[2]===0) {
         plan.push( fn( val[0], val[1], val[3], -orb, orb  ) );
-        
+
         }
       else if (val[2] == 180) {
         plan.push( fn( val[0], val[1], val[3], 180-orb, 180  ) );
         plan.push( fn( val[0], val[3], val[1], -180, -180+orb ) );
         }
-      else {  
-        if (val[4]!='-') 
+      else {
+        if (val[4]!='-')
           plan.push( fn( val[0], val[1], val[3], val[2]-orb, val[2]+orb  ) );
-        if (val[4]!='+') 
+        if (val[4]!='+')
           plan.push( fn( val[0], val[3], val[1], val[2]-orb, val[2]+orb  ) );
       }
-       
-      }, 
+
+      },
     "house-position":function(row,plan) {
       var val = getInputValues(row);
       plan.push( raw_fn.mp( val[0],val[1],null,val[2],val[2]+30) );
-      }, 
-    "sign-position":function(row,plan) { 
+      },
+    "sign-position":function(row,plan) {
       var val = getInputValues(row);
       plan.push( raw_fn.zl( val[0],val[1],null,val[2],val[2]+30) );
-      }, 
+      },
     "raw-term":function(row,plan) {
       var values = getInputValues(row);
       var fn = values[2];
       values.splice(2,1);
       plan.push( raw_fn[fn].apply(this,values) );
-      } 
+      }
    };
-   
+
   var raw_fn = {
-    "zl":function(coeff,pl1,pl2,arg1,arg2){ 
+    "zl":function(coeff,pl1,pl2,arg1,arg2){
       return coeff+"*zl("+pl1+","+arg1+","+arg2+")";
       },
     "zll":function(coeff,pl1,pl2,arg1,arg2){
@@ -453,7 +463,7 @@ function generateScoreFunction( plan ) {
     "mpp":function(coeff,pl1,pl2,arg1,arg2){
       return coeff+"*mpp("+pl1+","+pl2+","+arg1+","+arg2+")";
       }
-  }; 
+  };
 
   plan.push("score-source-begin");
   plan.push("orb:"+getText("orb"));
@@ -461,17 +471,17 @@ function generateScoreFunction( plan ) {
     plan.push(tr.className+":"+getInputValues(tr).join(","))
     });
   plan.push("score-source-end");
-  
+
   plan.push("score-begin");
   byTagName("tr",byId("score-fn")).each( function(tr) {
     translate[tr.className](tr,plan);
     });
   plan.push("score-end");
-  
-    
-  }  
-  
-// Retrieves an array of all the inputs in a row  
+
+
+  }
+
+// Retrieves an array of all the inputs in a row
 function getInputValues(tr) {
   var values = [];
   getInputFields(tr).each( function() {
@@ -493,66 +503,66 @@ function getInputFields(tr) {
   }
 
 // Execute the C program "astrotest.exe" from the command line
-function executePlan( ) {  
+function executePlan( ) {
   out('cd "'+readPathFromURL()+'"');
-  out('astrotest "'+getText("plan-file")+'" "'+getText("source-file")+'"');   
+  out('astrotest "'+getText("plan-file")+'" "'+getText("source-file")+'"');
   var output = executeCommand({
     cmd:'astrotest "'+getText("plan-file")+'" "'+getText("source-file")+'"',
     path:readPathFromURL()
     });
   out(output);
-  }        
+  }
 
 // Generate two seed-values randomly
-function generate_seed( ) {  
+function generate_seed_values( ) {
   setText("seed1", (Math.random( )*10000000).toFixed(0) );
-  setText("seed2", (Math.random( )*10000000).toFixed(0) );  
+  setText("seed2", (Math.random( )*10000000).toFixed(0) );
   }
-  
+
 // Input fields which expect a julian date
-// As a hint, the corresponding calendar date will be showed 
+// As a hint, the corresponding calendar date will be showed
 function input_juldate(event) {
   var inputField = event.target;
-  
-// If calendar date given: Convert to Julian date  
+
+// If calendar date given: Convert to Julian date
   var m = inputField.value.match(/(\d{1,2})\.(\d{1,2})\.(\-?\d{1,4})/);
   if (m) {
     var jd = swe_julday( m[3],m[2],m[1], 0, m[3] >= 1582 );
     inputField.value = jd;
-    }    
+    }
 
 // Make calendar date quickinfo
-  inputField.setAttribute("title", 
+  inputField.setAttribute("title",
     is_numeric(inputField.value) ? swe_revjul( 1*inputField.value ) : "" );
 
-  }  
-  
+  }
+
 
 // Save plan to file
 function savePlan( file, plan ) {
-  var fs = fso.OpenTextFile( fullPath(file), 
+  var fs = fso.OpenTextFile( fullPath(file),
                              2, // for Writing
                              1  // Create if not existing
-                             );  
+                             );
   plan.each( function(line) {
     fs.WriteLine( line );
     });
   fs.Close( );
   }
-  
-// Read plan from file  
+
+// Read plan from file
 function readPlan( file ) {
   var plan = [];
-  var fs = fso.OpenTextFile( fullPath(file), 
+  var fs = fso.OpenTextFile( fullPath(file),
                              1 // for Reading
-                             );  
+                             );
   while (!fs.AtEndOfStream) {
-    plan.push( fs.ReadLine() );    
+    plan.push( fs.ReadLine() );
     }
-  fs.Close(); 
-  return plan; 
+  fs.Close();
+  return plan;
   }
-  
+
 
 // After having read the plan from file, the lines will
 // be used to propagate the input fields of the HTML page
@@ -560,7 +570,7 @@ function fillSelectionsFromPlan( plan ) {
   deleteScoreFunction( );
   var readingScoreSource = false;
   var hasScoreSource = false;
-  var readingScore = false; 
+  var readingScore = false;
   var score = [];
   plan.each( function(line) {
     if (/^#/.test(line)) return;
@@ -586,21 +596,21 @@ function fillSelectionsFromPlan( plan ) {
           return;
         case "jd":
           var dates = m[2].split(",");
-          setText("jd1",dates[0]);  
-          setText("jd2",dates[1]);  
+          setText("jd1",dates[0]);
+          setText("jd2",dates[1]);
           setText("jd3",dates[2]);
-          return;  
+          return;
         }
       }
     else if (/score\-source\-begin/.test(line)) {
       readingScoreSource = true;
-      }    
+      }
     else if (/score\-source\-end/.test(line)) {
       readingScoreSource = false;
       }
     else if (/score\-begin/.test(line)) {
       readingScore = true;
-      }    
+      }
     else if (/score\-end/.test(line)) {
       readingScore = false;
       }
@@ -610,75 +620,75 @@ function fillSelectionsFromPlan( plan ) {
         }
       else {
         hasScoreSource = true;
-        addScoreSelectionFromPlan(line);  
+        addScoreSelectionFromPlan(line);
         }
       }
     else if (readingScore) {
-      score.push( line );      
+      score.push( line );
       }
     });
-    
-// Adapt visibility of rand-date-fn parameters    
+
+// Adapt visibility of rand-date-fn parameters
     rand_date_fn_changed();
-    
+
 // No score-source found? Use score
     if (!hasScoreSource && (score.length > 0)) {
       score.each( function(line) {
         var args = line.
-// Replace trailing ")"        
+// Replace trailing ")"
                     replace(/\s*\)\s*$/,"").
-// Split into value array, separated by comma, ), or *  
+// Split into value array, separated by comma, ), or *
                     split(/\s*[*,()]\s*/);
 // Add "raw-term" type row to score function
         var row = score_fn_add_row( "raw-term" )();
-// Build an array for providing with values        
+// Build an array for providing with values
 //                     coeff    pl1      fn
-        var values = [ args[0], args[2], args[1] ];        
-// Second planet (pl2), if function requires two         
+        var values = [ args[0], args[2], args[1] ];
+// Second planet (pl2), if function requires two
         values.push( takesTwoPlanets(args[1]) ? args[3] : "");
-// Append two numeric arguments          
+// Append two numeric arguments
         values.push.apply( values, args.slice(-2) );
-// Fill values into row's input/select fields        
+// Fill values into row's input/select fields
         getInputFields(row).each( function(field,i) {
           field.value = values[i];
-          });  
-        adaptScoreFunctionInputFields( row );                  
+          });
+        adaptScoreFunctionInputFields( row );
         });
       }
-  }  
-  
-// Deletes all terms of the score function  
+  }
+
+// Deletes all terms of the score function
 function deleteScoreFunction( ) {
   var score_fn = byId("score-fn");
   byTagName("tr",score_fn).each( function() {
     score_fn.deleteRow(-1);
     });
-  }  
+  }
 
 // Use score-source to propagate a term of the score function in UI
 function addScoreSelectionFromPlan(line) {
   var m = line.match(/([\w-]+)\s*:\s*(.*)/);
   if (m) {
     var row = score_fn_add_row( m[1] )();
-    var value = m[2].split(",");    
+    var value = m[2].split(",");
     getInputFields(row).each( function(field,i) {
       field.value = value[i];
-      });  
-    }    
-  }    
+      });
+    }
+  }
 
 // Convert .aaf file to .csv file, extracting the three relevant data
-// (julian date, geographical longitude, geographical latitude)  
+// (julian date, geographical longitude, geographical latitude)
 function convert_aaf_to_csv() {
   var file_aaf = fullPath(getText("source-file-aaf"));
   if (!file_aaf.match(/\S/)) {
-    throw { 
+    throw {
       msg:"Please specify AAF source file",
       field:"aaf-source-file"
       };
     }
   if (file_aaf.match(/\.csv/)) {
-    throw { 
+    throw {
       msg:"AAF source file should not end with .csv",
       field:"aaf-source-file"
       };
@@ -686,22 +696,22 @@ function convert_aaf_to_csv() {
   if (!fso.FileExists(file_aaf)) {
     throw {
       msg: "File '" + file_aaf + "' could not be found",
-      field:"aaf-source-file" 
+      field:"aaf-source-file"
       };
     }
-    
-  var aaf = fso.OpenTextFile( fullPath(file_aaf), 
+
+  var aaf = fso.OpenTextFile( fullPath(file_aaf),
                              1 // for Reading
                              );
-                                
-  var file_csv = (file_aaf.indexOf(".")>=0) ? 
+
+  var file_csv = (file_aaf.indexOf(".")>=0) ?
     file_aaf.replace(/\.([^.]*)$/,".csv")
     : file_aaf + ".csv";
-    
-  var csv = fso.OpenTextFile( fullPath(file_csv), 
+
+  var csv = fso.OpenTextFile( fullPath(file_csv),
                              2, // for Writing
                              1  // Create if not existing
-                             );  
+                             );
   var rc = aaf2csv(aaf,csv,stderr());
   csv.Close( );
   aaf.Close( );
@@ -711,31 +721,31 @@ function convert_aaf_to_csv() {
       field:"aaf-source-file"
       }
     }
-  else return file_csv;  
-  
+  else return file_csv;
+
   function stderr() {
     return {
       WriteLine:function(line) {
         out(line);
         }
     }
-  }  
-}  
+  }
+}
 
 function fullPath( file ) {
   return (file.indexOf('\\')>=0) ? file : readPathFromURL()+"\\"+file;
 }
-  
+
 function readPathFromURL() {
-  return decodeURIComponent( 
+  return decodeURIComponent(
     document.location.pathname.
       replace(/^\/(.*)\/.*\.html/,"$1").
       replace(/\//g,"\\")
       );
-  }  
+  }
 
 
-// General function to execute a command from within an HTML page  
+// General function to execute a command from within an HTML page
 function executeCommand( opt ) {
 
   var sh = new ActiveXObject("Wscript.Shell");
@@ -766,8 +776,8 @@ function executeCommand( opt ) {
     }
 
   }
-  
-// Julian Date <--> Calendar Date conversions, 
+
+// Julian Date <--> Calendar Date conversions,
 // Copied from Swiss Ephemeris (swedate.c) and adapted to JavaScript
 function swe_julday(year, month, day, ut, useJulianCalendar) {
   var jd;
@@ -783,16 +793,16 @@ function swe_julday(year, month, day, ut, useJulianCalendar) {
   if (!useJulianCalendar) {
     u2 = Math.floor(Math.abs(u) / 100) - Math.floor(Math.abs(u) / 400);
     if (u < 0.0) u2 = -u2;
-    jd = jd - u2 + 2;            
+    jd = jd - u2 + 2;
     if ((u < 0.0) && (u/100 == floor(u/100)) && (u/400 != floor(u/400)))
       jd -=1;
   }
   return jd;
-}  
+}
 
 function swe_revjul(jd, julianCalendar)
 {
-  var u0,u1,u2,u3,u4;  
+  var u0,u1,u2,u3,u4;
   u0 = 1*jd + 32082.5;
   if (!julianCalendar) {
     u1 = u0 + Math.floor (u0/36525.0) - Math.floor (u0/146100.0) - 38.0;
@@ -809,6 +819,107 @@ function swe_revjul(jd, julianCalendar)
   return day + "." + month + "." + year;
 }
 
-  
-  
+// --- Manage displaying and hiding of help window
+function helpDisplay() {
+
+  var helpBox = byId("help-text");
+  var showingId = "";
+
+  registerHelpDisplay();
+
+  function registerHelpDisplay() {
+    registerFor( document.body, "mouseover", helpMouseOver );
+    registerFor( document.body, "mouseout", helpMouseOut );
+    registerFor( document.body, "keyup", function(event) {
+      if (getKeyCode(event) == 27) hideHelpImmediately( ); // 27 = ESC
+      });
+    registerFor( document.body, "focus", hideHelpImmediately );
+    }
+
+  function helpMouseOver(event) {
+    var src = getSource( event );
+    if (hasClass(src,"with-help")) {
+      displayHelp(src);
+      }
+    else if (src.nodeName == "INPUT" || src.nodeName == "SELECT") {
+      hideHelpImmediately( );
+      }
+    }
+
+  function helpMouseOut(event) {
+    var src = getSource( event );
+    if (hasClass(src,"with-help")){
+      var leavingId =  getHelpClassId( src );
+      hideHelp( leavingId );
+      }
+    }
+
+  function displayHelp(src) {
+    var id = getHelpClassId(src);
+    if (!id) return;
+    var helpText = help_text( id );
+    if (!helpText) return;
+    showingId = id;
+    var offset = getOffset( src );
+    helpBox.style.top  = offset.top+"px";
+    helpBox.style.left = offset.left+"px";
+    helpBox.style.display = "";
+    helpBox.innerHTML = helpText;
+    }
+
+  function hideHelp(leavingId) {
+    if (helpBox.style.display == "none") return; // done
+    window.setTimeout( function() {
+      if (showingId == leavingId) {
+        hideHelpImmediately( );
+        }
+      },
+      1200);
+    }
+
+  function hideHelpImmediately() {
+    helpBox.style.display = "none";
+    showingId = "";
+    }
+
+  function getOffset( src ) {
+    var bodyRect = document.body.getBoundingClientRect( );
+    var srcRect = src.getBoundingClientRect( );
+    return { "left":srcRect.left - bodyRect.left + srcRect.width,
+             "top":srcRect.top - bodyRect.top };
+    }
+
+  function help_text( id ) {
+    if (!id) return null;
+    var container =
+      byId("help-texts").
+      contentWindow.
+      document.
+      getElementById(id);
+    return container ? container.innerHTML : null;
+    }
+
+  function getHelpClassId(src) {
+    if (!src.hasAttribute("data-help-id")) return null;
+    return src.getAttribute("data-help-id");
+    }
+
+  }
+
+// Function for opening the file explorer value help,
+// and transporting the chosen file name to another input field
+function fileChooser() {
+  var id;
+  return {
+    open:function(event) {
+      id = event.target.getAttribute("data-for");
+      byId("file-dialog").click( );
+      },
+    take:function(event) {
+      setText(id,event.target.value);
+      }
+    };
+  }
+
+
 registerFor(window,"DOMContentLoaded",init);

@@ -8,7 +8,7 @@
 #include "astrotest.h"
 #include "tests.h"
 
-const int NTESTS = 6;
+const int NTESTS = 7;
 
 void parseSingleLineDetectComment() {
   char parse_block[50] = "";
@@ -114,6 +114,42 @@ void ignoreSourceScoreBlock() {
   parse_single_line("source-score-end",parse_block,&params,&scoreFunction);
   assert_equals_int( scoreFunction.size, 1, "Result should contain precisely 1 line (source-score lines must be ignored" );    
   }  
+
+void detectOpposition() {
+
+  _hordat h = { 2451545., 0.,0.};
+  _termFunctionArgs args = { 0, 1, 170, 185 };  
+  pl_buf = malloc( 2 * sizeof( _planet_data ) );
+  
+  pl_buf[0].computed = pl_buf[1].computed = true;
+    
+  jd_pl_buf = h.jd;
+  
+  pl_buf[0].x = 30;
+  pl_buf[1].x = 201;
+  assert_equals_int( (int) zodiacalAspect( &h, &args),
+                      1,
+                      "Aspect 30..201 must be in range 170..185");
+
+  pl_buf[0].x = 30;
+  pl_buf[1].x = 199;
+  assert_equals_int( (int) zodiacalAspect( &h, &args),
+                      0,
+                      "Aspect 30..199 must not be in range 170..185");
+   
+  pl_buf[0].x = 30;
+  pl_buf[1].x = 214;
+  assert_equals_int( (int) zodiacalAspect( &h, &args),
+                      1,
+                      "Aspect 30..214 must be in range 170..185");
+
+  pl_buf[0].x = 30;
+  pl_buf[1].x = 216;
+  assert_equals_int( (int) zodiacalAspect( &h, &args),
+                      0,
+                      "Aspect 30..216 must not be in range 170..185");
+
+  }
   
 bool test(int i,testfn fn, char* description) {
   int rc;
@@ -138,6 +174,16 @@ void setup( ) {
    scoreFunction = scoreFunction0;
    const _params params0 = {};
    params = params0;
+
+   if (pl_buf) {
+     free( pl_buf );
+     pl_buf = NULL;
+      }
+   if (mp_buf) {
+     free( mp_buf );
+     mp_buf = NULL;
+     }
+   reset_planet_buffer( );
   
 }
 
@@ -173,6 +219,7 @@ int main( int argc, char** argv) {
   if (test(4,parseSingleLineDetectMundanePositionInRange,"Detect single function mp(1,2,3)")) ok++;
   if (test(5,parseSingleLineDetectMundaneAspect,"Detect single function mpp(0,1,85,95)")) ok++;
   if (test(6,ignoreSourceScoreBlock,"Ignore source code block(s)")) ok++;
+  if (test(7,detectOpposition,"Detect opposition aspect")) ok++;
   
   
   

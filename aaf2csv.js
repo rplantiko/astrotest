@@ -72,7 +72,7 @@ function aaf2csv(stdin,stdout,stderr) {
     result.lat = parseLatitude( record.B93[1] );
     
     result.identifier = getIdentifier( record.A93 );
-    result.jd_ut = getJulianDate( record ) - getTimeDiff( record ) / 24;
+    result.jd_ut = getJulianDate( record );
     
     return result;
     
@@ -81,6 +81,7 @@ function aaf2csv(stdin,stdout,stderr) {
   
   
   var nextLine = "";  // Needed as read buffer
+  
   function readNextRecord() {
     var record = {};  
     while (!stdin.AtEndOfStream) {
@@ -108,6 +109,7 @@ function aaf2csv(stdin,stdout,stderr) {
   
   }
 
+// Read line from input, sometimes with a one-line lookahead
   function readLine() {
     var line;
     if (nextLine) {
@@ -122,19 +124,29 @@ function aaf2csv(stdin,stdout,stderr) {
    
 } 
 
-
+// Sexagesimal parser for latitude
 function parseLatitude(latString) {
   return parseDMS(latString,"N","S",":","latitude");
 }
 
+// Sexagesimal parser for longitude
 function parseLongitude(lonString) {
   return parseDMS(lonString,"E","W",":","longitude");  
 }
 
+
+// Sexagesimal parser for time difference
 function parseTimeZoneDiff(zdiffString) {
   return parseDMS(zdiffString,"HE","HW",":","time zone diff");
   }  
 
+// Read time  
+function getTime( tstring ) {
+  var time = parseDMS( tstring, "h:","","m:","time");
+  return time;
+  }
+  
+// General sexagesimal parser
 function parseDMS(dmsString,dsep_plus,dsep_minus,msep,term) {
   var m = dmsString.match(/(\d{1,3})([^\d\s])(\d{1,2})(?:([^\d\s])(\d{1,2}))?/);
   if (m && m.length > 2) {
@@ -153,14 +165,28 @@ function parseDMS(dmsString,dsep_plus,dsep_minus,msep,term) {
   throw "Can't parse " + term + " value '" + dmsString + "'";  
   }
   
-  
+
+// Build full name from A93[0] and A93[1] as record identifier   
 function getIdentifier( A93 ) {  
   return A93[1] == "*" ? 
      A93[0] : 
      A93[0] + ", " + A93[1].replace(/^\s*/,"");
   }  
   
+// Read Julian Date  
 function getJulianDate( record ) {
+  var juldat = record.B93[0];
+  if (juldat!='*' && !isNaN(parseFloat((juldat))))
+// If the Julian Date is specified in the record: Retrieve it  
+    return juldat*1;
+  else 
+// B93[0] == '*': Force recomputation of the Julian Date
+    return computeJulianDate( record );
+  }  
+  
+// Forced computation of Julian Date  
+function computeJulianDate( record ) {
+  
   var date = record.A93[3].match(/(\d+)\.(\d+)\.(\d{4})\s*([gj])?/i);
   if (!date) {
     throw "Can't parse date from '" + record.A93[3] + "'";
@@ -168,19 +194,12 @@ function getJulianDate( record ) {
 
   var gregflag = (date[4] && date[4].toLowerCase() == "g") || 
      (date[3]*1 + date[2]/12 + date[1]/31 > 1583.285);
-  var time = getTime( record.A93[4] ) + getZoneDiff( record );  
+  var time = getTime( record.A93[4] ) - getTimeDiff( record );  
   return swe_julday(date[3],date[2],date[1],time,gregflag);
   }
   
-function getTime( tstring ) {
-  var time = parseDMS( tstring, "h:","","m:","time");
-  return time;
-  }
-  
-function getZoneDiff( record ) {
-  return 0;
-  }    
-  
+
+// Julian Date from calendar date (adjusted from swedate.c in Swiss Ephemeris)  
 function swe_julday(year, month, day, ut, gregflag) {
   var jd;
   var u,u0,u1,u2;
@@ -202,6 +221,7 @@ function swe_julday(year, month, day, ut, gregflag) {
   return jd;
 }
 
+// Returns the time zone difference to UT in hours
 function getTimeDiff(record) {
   
   if (record.ZNAM == "*" || record.ZNAM == "" || record.ZNAM == "LMT") {    
@@ -219,13 +239,13 @@ function getTimeDiff(record) {
     
 }
 
-// Add more time zones if needed:
+// Add more time zones if needed!
 getTimeDiff.timeZones = {
   GMT : 0,
   MET : 1
   };
 
-
+// DST indicator
 function getDaylightSavingTime(dst_indicator) {
   var i = "120m*L".indexOf(dst_indicator);
   if (i>-1) return i>1 ? 0 : i+1;

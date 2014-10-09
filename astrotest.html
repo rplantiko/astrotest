@@ -19,44 +19,44 @@
    
     <table id="selections">
       <tr id="row-csv">
-        <td title="This file must contain each horoscope data in a csv row of the form 'julian date;longitude;latitude'">Sample dataset (.csv)</td>
+        <td class="with-help" data-help-id="source-file">Sample dataset (.csv)</td>
         <td>
           <input type="text" id="source-file" size="60" value="test.csv">
-          <button type="button" class="choose-file" data-for="source-file">Choose</button>
-          <button type="button" id="switch-to-aaf" title="Generate .csv file from an AAF input">AAF</button>  
+          <button type="button" class="choose-file with-help" data-help-id="choose-file-name" data-for="source-file">Choose</button>
+          <button type="button" id="switch-to-aaf" class="with-help" data-help-id="switch-to-aaf">AAF</button>  
         </td>
       </tr>
       <tr id="row-aaf" style="display:none">
-        <td title="The sample dataset in the 'Astrologisches Austauschformat' (AAF)">Sample dataset (.aaf)</td>
+        <td class="with-help" data-help-id="source-file-aaf">Sample dataset (.aaf)</td>
         <td>
           <input type="text" id="source-file-aaf" size="60" value="test.aaf">
-          <button type="button" class="choose-file" data-for="source-file-aaf">Choose</button>
-          <button type="button" id="convert-from-aaf" title="Converts the file to a .csv, as required as input for astrotest">Convert</button>  
-          <button type="button" id="switch-to-csv" title="Switch back to .csv input">CSV</button>  
+          <button type="button" class="choose-file with-help" data-help-id="choose-file-name" data-for="source-file-aaf">Choose</button>
+          <button type="button" class="with-help" data-help-id="convert-from-aaf" id="convert-from-aaf">Convert</button>  
+          <button type="button" id="switch-to-csv" class="with-help" data-help-id="back-to-csv" >CSV</button>  
         </td>
       </tr>
       <tr>
-        <td title="Number of randomized datasets the program shall generate">Number of test runs</td>
+        <td class="with-help" data-help-id="number-of-runs">Number of test runs</td>
         <td>
           <input type="number" id="test-runs" size="6">
         </td>
       </tr>    
       <tr>
-        <td title="Different methods to choose from for the generation of randomized samples, in one way or the other linked with the original sample">Function to generate random date/time</td>
+        <td class="with-help" data-help-id="rand-date-fn">Function to generate random date/time</td>
         <td>
-          <select id="rand-date-fn"></select>
+          <select id="rand-date-fn" data-help-id="rand-date-fn-values" class="with-help"></select>
         </td>
       </tr>
       <tr>
-        <td title="A pseudo random number generator (PNG) is an algorithm generating approximately uniformly distributed numbers. It needs two (arbitrary) seed values to start with. The same seed values always will generate the same sequence of numbers.">Seed values for PNG</td>
+        <td class="with-help" data-help-id="seed-values">Seed values for PNG</td>
         <td>
           <input id="seed1" type="number" width="7">
           <input id="seed2" type="number" width="7">
-          <button type="button" id="generate_seed">Generate</button>
+          <button type="button" id="generate-seed-values" class="with-help" data-help-id="generate-seed-values">Generate</button>
         </td>
       </tr>
       <tr id="R-dates" style="display:none">
-        <td title="Random date function 'R' selects dates from two intervals [date1,date2] and [date2,date3]. Specify date1, date2, date3 as julian date, or in the European date format 'dd.mm.yyyy'">Dates for random date function "R"</td>
+        <td class="with-help" data-help-id="rand-date-fn-R">Dates for random date function "R"</td>
         <td>
           <input id="jd1" class="juldate" type="number">
           <input id="jd2" class="juldate" type="number">
@@ -64,91 +64,91 @@
         </td>
       </tr>
       <tr id="Q-quantiles" style="display:none">
-        <td title="Random date function 'Q' selects for eaach date of the sample a random date value in its quantile. Here, you specify the quantile number">Quantiles</td>
+        <td class="with-help" data-help-id="rand-date-fn-Q">Quantiles</td>
         <td>
           <input id="quantiles" type="number" size="3">
         </td>
       </tr>
       <tr>
-        <td title="The house system is needed if your score function involves mundane positions">House system</td>
+        <td class="with-help" data-help-id="house-system">House system</td>
         <td>
           <select id="hsys" size="1"></select>
         </td>
       </tr>
       <tr>
-        <td title="Aspect orb - only necessary if your score function works with aspects">Aspect orb</td>
+        <td class="with-help" data-help-id="orb">Aspect orb</td>
         <td>
           <input id="orb" type="number" value="5">&nbsp;°
         </td>
       </tr>
       <tr>
-        <td title="The score value to compute for a horoscope">Score Function</td>
+        <td class="with-help" data-help-id="score-fn">Score Function</td>
         <td>
-          <button type="button" id="add-aspect" class="add_row" title="Add aspect">Add aspect</button>
-          <button type="button" id="add-sign-position" class="add_row" title="Add sign position">Add sign position</button>
-          <button type="button" id="add-house-position" class="add_row" title="Add house position">Add house position</button>
-          <button type="button" id="add-raw-term" class="add_row" title="Add raw term">Add raw term</button>
+          <button type="button" id="add-aspect" class="add_row">Add aspect</button>
+          <button type="button" id="add-sign-position" class="add_row">Add sign position</button>
+          <button type="button" id="add-house-position" class="add_row">Add house position</button>
+          <button type="button" id="add-raw-term" class="add_row">Add raw term</button>
           <table id="score-fn"><tbody/></table>
           <script type="text/html" id="row-template-aspect">
             <tr class="aspect">
-            <td>+<input title="Weighting factor of this constellation" type="number" value="1">*</td>
-            <td><select title="First partner of the aspect" class="planet" value="0"></select></td>
+            <td>+<input class="with-help" data-help-id="weight-factor" type="number" value="1">*</td>
+            <td><select class="planet" value="0"></select></td>
             <td><select class="aspect"></select></td>            
-            <td><select title="Second partner of the aspect" class="planet" value="1"></select></td>
-            <td><select value="*" title="Look only for aspects to the right (dexter = decreasing in longitude), to the left (sinister = increasing in longitude), or in both directions (not relevant for conjunction and opposition)" class="direction"></select></td>
-            <td><select title="Zodiacal aspects (common) - or mundane aspects" class="reference" value="z"></select></td>            
-            <td><button type="button" class="delete_row" title="Delete this row">-</button></td>
+            <td><select class="planet" value="1"></select></td>
+            <td><select value="*" class="direction with-help" data-help-id="aspect-direction" ></select></td>
+            <td><select class="reference with-help" value="z" data-help-id="aspect-reference"></select></td>            
+            <td><button type="button" class="delete_row with-help" data-help-id="delete-row">-</button></td>
             </tr>
           </script>
           <script type="text/html" id="row-template-house-position">
             <tr class="house-position">
-            <td>+<input title="Weighting factor of this position" type="number" value="1">*</td>
-            <td><select title="Planet" class="planet" value="0"></select></td>
+            <td>+<input class="with-help" data-help-id="weight-factor" type="number" value="1">*</td>
+            <td><select class="planet" value="0"></select></td>
             <td>in <select class="house"></select></td>            
             <td></td>
             <td></td>
             <td></td>            
-            <td><button type="button" class="delete_row" title="Delete this row">-</button></td>
+            <td><button type="button" class="delete_row with-help" data-help-id="delete-row">-</button></td>
             </tr>
           </script>
           <script type="text/html" id="row-template-sign-position">
             <tr class="sign-position">
-            <td>+<input title="Weighting factor of this position" type="number" value="1">*</td>
-            <td><select title="Planet" class="planet" value="0"></select></td>
+            <td>+<input class="with-help" data-help-id="weight-factor" type="number" value="1">*</td>
+            <td><select class="planet" value="0"></select></td>
             <td>in <select class="sign"></select></td>            
             <td></td>
             <td></td>
             <td></td>            
-            <td><button type="button" class="delete_row" title="Delete this row">-</button></td>
+            <td><button type="button" class="delete_row with-help" data-help-id="delete-row">-</button></td>
             </tr>
           </script>
           <script type="text/html" id="row-template-raw-term">
             <tr class="raw">
-            <td>+<input title="Weighting factor of this constellation" type="number" value="1">*</td>
-            <td><select title="First planet" class="planet pl1" value="0"></select></td>
+            <td>+<input class="with-help" data-help-id="weight-factor" type="number" value="1">*</td>
+            <td><select class="planet pl1" value="0"></select></td>
             <td><select class="fn" value="zll"></select></td>            
-            <td><select title="Second planet" class="planet pl2" value="1"></select></td>
+            <td><select class="planet pl2" value="1"></select></td>
             <td><input title="First numeric argument" type="number" class="arg1"></td>
             <td><input title="Second numeric argument" type="number" class="arg2"></td>
-            <td><button type="button" class="delete_row" title="Delete this row">-</button></td>
+            <td><button type="button" class="delete_row with-help" data-help-id="delete-row">-</button></td>
             </tr>
           </script>
         </td>
       </tr>
       <tr>
-        <td title="If a date is out of the Swiss Ephemeris range, the run usually will abort with an error message. If instead you would like to continue with the Moshier values (analytical theory), check this flag">Allow Moshier fallback</td>
+        <td class="with-help" data-help-id="allow-moshier-fallback">Allow Moshier fallback</td>
         <td>
           <input type="checkbox" id="cont-with-mosh">
         </td>
       </tr>
       <tr>
-        <td title="If you want to specify the location where the Swiss Ephemeris files reside, use this field.">Ephemeris path</td>
+        <td class="with-help" data-help-id="sweph-ephepath">Ephemeris path</td>
         <td>
           <input type="text" id="ephepath">
         </td>
       </tr>      
       <tr>
-        <td title="Produces additional output in file prot.txt (with a slight performance impact)">Debug level</td>
+        <td class="with-help" data-help-id="dbg-level">Debug level</td>
         <td>
           <select id="dbg-level" size="1">
             <option value="0">No debug output</option>
@@ -157,10 +157,10 @@
         </td>
       </tr>    
       <tr>
-        <td rowspan="2" title="The settings you performed on this page will be saved in the following file">These settings</td>
+        <td rowspan="2" class="with-help" data-help-id="plan-file">These settings</td>
         <td>
           <input type="text" id="plan-file" size="60" value="test.plan">
-          <button type="button" class="choose-file" data-for="plan-file">Choose</button>
+          <button type="button" class="choose-file with-help" data-help-id="choose-file-name" data-for="plan-file">Choose</button>
         </td>
       </tr>
       <tr>
@@ -176,11 +176,16 @@
 
     
     <div id="final-buttons">
-      <button type="button" id="compute" title="Checks input, saves the above selections in the plan file, and executes the random test">Compute</button>
+      <button type="button" id="compute" class="with-help" data-help-id="compute">Compute</button>
     </div>
     
     <p></p>
     <textarea id="output" cols="93" rows="10" readonly></textarea>
+
+    <div id="help-text" style="display:none;"></div>
+    
+    <!-- To my knowledge, the <iframe> hack is still the only way to modularize html pages -->
+    <iframe id="help-texts" style="display:none" src="help-texts.html"></iframe>
     
 </body>
 

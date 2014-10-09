@@ -1,6 +1,7 @@
     body {
       font-family:Verdana, Arial;
       font-size:75%;
+      position:relative;
       }
       
     h1 {
@@ -41,6 +42,21 @@
     input[type=number] {
       width:4em;
       }
+      
+    #help-text {
+      width:400px;
+      border:solid black 1px;
+      margin:0em 0.5em 0.5em 0.5em;
+      padding:0.5em;
+      position:absolute;
+      z-index:1;
+      background-color:#FFFFFF;
+      }  
+      
+    .formula {
+      font-style:oblique;
+      padding:1em 0em;
+      }  
       
     #output {
       background-color:#EEE;

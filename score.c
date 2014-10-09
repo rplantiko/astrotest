@@ -132,7 +132,7 @@ double mundanePosition( int pl, _hordat* hor) {
   if (!mp_buf[pl].computed) {    
     xpin[0] = zodiacalLength( pl, hor->jd );
     xpin[1] = 0;
-    mp_buf[pl].x = swe_house_pos( mp_buf_armc, hor->lat, mp_buf_eps, params.hsys, xpin, serr);
+    mp_buf[pl].x = 30 * ( swe_house_pos( mp_buf_armc, hor->lat, mp_buf_eps, params.hsys, xpin, serr) - 1);
     mp_buf[pl].computed = true;        
     }
 
@@ -160,9 +160,9 @@ double zodiacalAspect(_hordat* hor, _termFunctionArgs* args) {
     if (debug_level) {
       fprintf(dbg,"      l1:%6.2f, l2:%6.2f, diff: %6.2f, aspect (%.2f-%.2f) holds: %s\n",
         l1, l2, diff, args->start, args->end,
-        (diff > args->start && diff < args->end) ? "yes" : "no" );
+        (arcdiff(diff,args->start) > 0 && arcdiff(args->end,diff) > 0) ? "yes" : "no" );
       }  
-    return diff > args->start && diff < args->end; 
+    return arcdiff(diff,args->start) > 0 && arcdiff(args->end,diff) > 0; 
   }  
 
 double mundanePositionInRange(_hordat* hor, _termFunctionArgs* args) {
@@ -183,9 +183,9 @@ double mundaneAspect(_hordat* hor, _termFunctionArgs* args) {
     if (debug_level) {
       fprintf(dbg,"      mp1:%6.2f, mp2:%6.2f, diff: %6.2f, m. aspect (%.2f-%.2f) holds: %s\n",
         mp1, mp2, diff, args->start, args->end,
-        (diff > args->start && diff < args->end) ? "yes" : "no" );
+        (arcdiff(diff,args->start) > 0 && arcdiff(args->end,diff) > 0) ? "yes" : "no" );
       }  
-    return diff > args->start && diff < args->end; 
+    return arcdiff(diff,args->start) > 0 && arcdiff(args->end,diff) > 0; 
   }
 
 // --- For a single computation, reset the planet buffer
